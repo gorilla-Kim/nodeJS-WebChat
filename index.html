@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>example2</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta charset="utf-8"/>
+		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+		<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+		<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			$(document).ready(function(){
+				var socket = io.connect();
+								
+				socket.on('message', function(data){
+					// 추가할 문자열 만들기
+					var output = '';
+					output += '<li>';
+					output += '		<h3>'+data.name+'</h3>';
+					output += '		<p>'+data.message+'</p>';
+					output += '		<p>'+data.date+'</p>';
+					output += '</li>';
+					// html문서에 추가하기
+					$(output).prependTo('#content');
+					$('#content').listview('refresh');
+				});
+				socket.on('roomList', function(data){
+					// 추가할 문자열 만들기
+					var output = '';
+					for(name in data){
+						output += '<li>';
+						output += '		<h3 id="room">'+data[name]+'</h3>';
+						output += '</li>';
+					}
+		
+					// html문서에 추가하기
+					$('#roomNames').html(output);
+					$('#roomNames').listview('refresh');
+				});
+				
+				$('button').click(function(){
+					socket.emit('message', {
+						name: $('#name').val(),
+						message: $('#message').val(),
+						date: new Date().toUTCString()
+					});
+					$('#message').val('');
+				});
+				
+				$('#startChat').click(function(){
+					var roomName = $('#roomName').val();
+					alert(roomName);
+					socket.emit('join', roomName);
+					alert('success');
+					$('#roomId').html(roomName);
+				});
+				
+				$('#gotoRoomList').click(function(){
+					socket.emit('getRoomList', 'test');
+				});
+				
+				$('#message').keypress(function(event){
+					if ( event.which == 13 ) {
+						$('button').click();
+						return false;
+					}
+				});
+				
+			});
+		</script>
+	</head>
+	<body>
+		<div data-role="page" id="new">
+			<div data-role="header">
+				<h1>Socket.io Chat</h1>
+			</div>
+			<div data-role="navbar">
+				<ul>
+					<li><a href="#roomList" id="gotoRoomList">채팅 리스트</a></li>
+				</ul>
+			</div><!-- /navbar -->
+			<div data-role="content">
+				<h3>Insert Nick Name</h3>
+				<input id="name" />
+				<h3>Insert Room Name</h3>
+				<input id="roomName" />
+				<a data-role="button" href="#chatpage" id="startChat">채팅시작</a>
+			</div>
+		</div>
+		
+		<div data-role="page" id="roomList">
+			<div data-role="header">
+				<h1>Socket.io Chat</h1>
+			</div>
+			<div data-role="navbar">
+				<ul>
+					<li><a href="#new" >채팅방 생성</a></li>
+				</ul>
+			</div><!-- /navbar -->
+			<div data-role="content">
+				<h3>RoomList</h3>
+				<p>※ 아래 원하시는 방이름을 복사 후 "채팅방 생성" 으로 돌아가 insert Room Name칸에 넣어주세요 ※</p>
+				<ul id="roomNames" data-role="listview" data-insert="true">
+				</ul>
+			</div>
+		</div>
+		
+		<div data-role="page" id="chatpage">
+			<div data-role="header">
+				<h1>Socket.io Chat</h1>
+				<h2 id="roomId"></h2>
+			</div>
+			<div data-role="navbar">
+				<ul>
+					<li><a href="#roomList" id="gotoRoomList">채팅 리스트</a></li>
+					<li><a href="#new" >채팅방 생성</a></li>
+				</ul>
+			</div><!-- /navbar -->
+			<div data-role="content">
+				<input id="message" />
+				<button>Button</button>
+				<ul id="content" data-role="listview" data-insert="true">
+				</ul>
+			</div>
+		</div>
+	</body>
+</html>
